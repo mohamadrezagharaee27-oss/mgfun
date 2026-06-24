@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}{{ profile_user.username }} — MG FUN{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+  <!-- Header banner -->
+  <div class="profile-banner">
+    <div class="profile-header">
+      {% if profile_user.avatar %}
+        <img src="{{ url_for('uploaded_file', filename='avatars/' + profile_user.avatar) }}"
+             alt="{{ profile_user.username }}" class="profile-avatar" />
+      {% else %}
+        <div class="profile-avatar profile-avatar-default">{{ profile_user.username[0].upper() }}</div>
+      {% endif %}
+      <div class="profile-info">
+        <h1 class="profile-username">{{ profile_user.username }}</h1>
+        <div class="profile-stats">
+          <span><strong>{{ uploads|length }}</strong> uploads</span>
+          <span>Joined {{ profile_user.created_at.strftime('%b %Y') }}</span>
+        </div>
+        {% if profile_user.bio %}
+          <p class="profile-bio">{{ profile_user.bio }}</p>
+        {% endif %}
+      </div>
+      {% if current_user.is_authenticated and current_user.id == profile_user.id %}
+        <a class="btn btn-ghost" href="{{ url_for('settings') }}">Edit Profile</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Uploads grid -->
+  <div class="profile-content">
+    <h2 class="section-title">Uploads</h2>
+    {% if uploads %}
+      <div class="cards-grid">
+        {% for item in uploads %}
+          <a class="card" href="{{ url_for('view_upload', upload_id=item.id) }}">
+            <div class="card-thumb">
+              {% if item.file_type == 'video' %}
+                <div class="thumb-icon thumb-video">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                </div>
+                <span class="badge badge-video">Video</span>
+              {% elif item.file_type == 'image' %}
+                <img src="{{ url_for('uploaded_file', filename='images/' + item.filename) }}"
+                     alt="{{ item.title }}" loading="lazy" class="card-img" />
+                <span class="badge badge-image">Image</span>
+              {% else %}
+                <div class="thumb-icon thumb-pdf">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                </div>
+                <span class="badge badge-pdf">PDF</span>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <h3 class="card-title">{{ item.title }}</h3>
+              <div class="card-meta">
+                <span>{{ item.created_at.strftime('%b %d, %Y') }}</span>
+                <span class="card-stats">
+                  <span>👁 {{ item.view_count }}</span>
+                  <span>❤️ {{ item.like_count }}</span>
+                </span>
+              </div>
+            </div>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <h3>No uploads yet</h3>
+        {% if current_user.is_authenticated and current_user.id == profile_user.id %}
+          <a class="btn btn-primary" href="{{ url_for('upload') }}">Upload your first file</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

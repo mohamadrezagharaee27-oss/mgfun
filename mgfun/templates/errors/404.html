@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}404 — MG FUN{% endblock %}
+{% block content %}
+<div class="error-page">
+  <div class="error-code">404</div>
+  <h1 class="error-msg">Page not found</h1>
+  <p>The page you're looking for doesn't exist or has been moved.</p>
+  <a class="btn btn-primary" href="{{ url_for('index') }}">Back to Home</a>
+</div>
+{% endblock %}

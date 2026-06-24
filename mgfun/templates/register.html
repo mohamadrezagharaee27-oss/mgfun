@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — MG FUN{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo"><span class="logo-mg">MG</span><span class="logo-fun">FUN</span></div>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Free forever. No credit card needed.</p>
+
+    <form method="post" class="auth-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="form-group">
+        {{ form.username.label(class='form-label') }}
+        {{ form.username(class='form-control' + (' is-invalid' if form.username.errors else ''), placeholder='Choose a username') }}
+        {% for e in form.username.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.email.label(class='form-label') }}
+        {{ form.email(class='form-control' + (' is-invalid' if form.email.errors else ''), placeholder='you@email.com') }}
+        {% for e in form.email.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.password.label(class='form-label') }}
+        <div class="password-wrap">
+          {{ form.password(class='form-control' + (' is-invalid' if form.password.errors else ''), placeholder='At least 6 characters', id='passwordInput') }}
+          <button type="button" class="toggle-pw" onclick="togglePassword('passwordInput', this)">Show</button>
+        </div>
+        {% for e in form.password.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.confirm_password.label(class='form-label') }}
+        {{ form.confirm_password(class='form-control' + (' is-invalid' if form.confirm_password.errors else ''), placeholder='Repeat password') }}
+        {% for e in form.confirm_password.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+      </div>
+
+      {{ form.submit(class='btn btn-primary btn-block') }}
+    </form>
+
+    <p class="auth-footer">Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+  </div>
+</div>
+{% endblock %}

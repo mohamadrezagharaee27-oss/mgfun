@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}Settings — MG FUN{% endblock %}
+
+{% block content %}
+<div class="form-page">
+  <div class="form-card">
+    <h1 class="form-title">Edit Profile</h1>
+
+    <form method="post" enctype="multipart/form-data" class="upload-form" novalidate>
+      {{ form.hidden_tag() }}
+
+      <div class="form-group text-center">
+        {% if current_user.avatar %}
+          <img src="{{ url_for('uploaded_file', filename='avatars/' + current_user.avatar) }}"
+               class="settings-avatar" id="avatarPreview" alt="Avatar" />
+        {% else %}
+          <div class="profile-avatar profile-avatar-default settings-avatar" id="avatarPreview">
+            {{ current_user.username[0].upper() }}
+          </div>
+        {% endif %}
+        <div class="form-group mt-sm">
+          {{ form.avatar.label(class='form-label') }}
+          {{ form.avatar(class='form-control', onchange='previewAvatar(this)') }}
+          {% for e in form.avatar.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        {{ form.bio.label(class='form-label') }}
+        {{ form.bio(class='form-control textarea', placeholder='Tell people about yourself…', rows=4) }}
+        {% for e in form.bio.errors %}<span class="form-error">{{ e }}</span>{% endfor %}
+      </div>
+
+      {{ form.submit(class='btn btn-primary btn-block') }}
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewAvatar(input) {
+  if (!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('avatarPreview');
+    if (prev.tagName === 'IMG') {
+      prev.src = e.target.result;
+    } else {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      img.className = 'settings-avatar';
+      img.id = 'avatarPreview';
+      prev.replaceWith(img);
+    }
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+</script>
+{% endblock %}

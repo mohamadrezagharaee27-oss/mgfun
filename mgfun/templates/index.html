@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}MG FUN — Home{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-text">
+    <h1>Share <span class="accent">anything</span>.<br>Discover everything.</h1>
+    <p>Videos, images, and PDFs — all in one place.</p>
+    {% if not current_user.is_authenticated %}
+      <div class="hero-cta">
+        <a class="btn btn-primary btn-lg" href="{{ url_for('register') }}">Get Started Free</a>
+        <a class="btn btn-ghost btn-lg" href="{{ url_for('search') }}">Browse Content</a>
+      </div>
+    {% else %}
+      <a class="btn btn-primary btn-lg" href="{{ url_for('upload') }}">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Upload Now
+      </a>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Trending -->
+{% if trending %}
+<section class="home-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="fire-icon">🔥</span> Trending
+    </h2>
+  </div>
+  <div class="cards-row">
+    {% for item in trending %}
+      {{ render_card(item) }}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Most Liked -->
+{% if most_liked %}
+<section class="home-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span>❤️</span> Most Liked
+    </h2>
+  </div>
+  <div class="cards-row">
+    {% for item in most_liked %}
+      {{ render_card(item) }}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- Latest -->
+<section class="home-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span>🆕</span> Latest Uploads
+    </h2>
+    <a href="{{ url_for('search') }}" class="see-all">See all →</a>
+  </div>
+  {% if latest %}
+    <div class="cards-grid">
+      {% for item in latest %}
+        {{ render_card(item) }}
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">📭</div>
+      <h3>Nothing here yet</h3>
+      <p>Be the first to upload something!</p>
+      {% if current_user.is_authenticated %}
+        <a class="btn btn-primary" href="{{ url_for('upload') }}">Upload Now</a>
+      {% else %}
+        <a class="btn btn-primary" href="{{ url_for('register') }}">Join & Upload</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% macro render_card(item) %}
+<a class="card" href="{{ url_for('view_upload', upload_id=item.id) }}">
+  <div class="card-thumb">
+    {% if item.file_type == 'video' %}
+      <div class="thumb-icon thumb-video">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </div>
+      <span class="badge badge-video">Video</span>
+    {% elif item.file_type == 'image' %}
+      <img src="{{ url_for('uploaded_file', filename='images/' + item.filename) }}"
+           alt="{{ item.title }}" loading="lazy" class="card-img" />
+      <span class="badge badge-image">Image</span>
+    {% else %}
+      <div class="thumb-icon thumb-pdf">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <span class="badge badge-pdf">PDF</span>
+    {% endif %}
+  </div>
+  <div class="card-body">
+    <h3 class="card-title">{{ item.title }}</h3>
+    <div class="card-meta">
+      <span class="card-author">{{ item.uploader.username }}</span>
+      <span class="card-stats">
+        <span>👁 {{ item.view_count }}</span>
+        <span>❤️ {{ item.like_count }}</span>
+      </span>
+    </div>
+  </div>
+</a>
+{% endmacro %}

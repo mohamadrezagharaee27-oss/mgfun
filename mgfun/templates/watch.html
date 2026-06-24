@@ -1,0 +1,225 @@
+{% extends 'base.html' %}
+{% block title %}{{ upload.title }} — MG FUN{% endblock %}
+
+{% block content %}
+<div class="watch-layout">
+  <!-- Main column -->
+  <div class="watch-main">
+
+    <!-- Media player area -->
+    <div class="media-box">
+      {% if upload.file_type == 'video' %}
+        <video controls class="media-player" preload="metadata">
+          <source src="{{ url_for('uploaded_file', filename='videos/' + upload.filename) }}">
+          Your browser doesn't support HTML5 video.
+        </video>
+
+      {% elif upload.file_type == 'image' %}
+        <img src="{{ url_for('uploaded_file', filename='images/' + upload.filename) }}"
+             alt="{{ upload.title }}" class="media-image" />
+
+      {% else %}
+        <div class="pdf-viewer">
+          <iframe src="{{ url_for('uploaded_file', filename='pdfs/' + upload.filename) }}#view=FitH"
+                  class="pdf-frame" title="{{ upload.title }}"></iframe>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Title & meta -->
+    <div class="watch-info">
+      <div class="watch-type-badge badge-{{ upload.file_type }}">{{ upload.file_type.upper() }}</div>
+      <h1 class="watch-title">{{ upload.title }}</h1>
+
+      <div class="watch-meta-row">
+        <div class="watch-stats">
+          <span>👁 {{ upload.view_count }} views</span>
+          <span>📅 {{ upload.created_at.strftime('%b %d, %Y') }}</span>
+          <span class="category-tag">{{ upload.category }}</span>
+        </div>
+
+        <div class="watch-actions">
+          <!-- Like button -->
+          <button class="like-btn {% if current_user.is_authenticated and current_user.has_liked(upload.id) %}liked{% endif %}"
+                  id="likeBtn"
+                  onclick="toggleLike({{ upload.id }})"
+                  {% if not current_user.is_authenticated %}
+                    title="Sign in to like"
+                    onclick="window.location='{{ url_for('login') }}'"
+                  {% endif %}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="{% if current_user.is_authenticated and current_user.has_liked(upload.id) %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2">
+              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+            </svg>
+            <span id="likeCount">{{ upload.like_count }}</span>
+          </button>
+
+          <!-- Download -->
+          <a class="action-btn"
+             href="{{ url_for('uploaded_file', filename=upload.file_type + 's/' + upload.filename) }}"
+             download="{{ upload.original_filename }}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download
+          </a>
+
+          {% if current_user.is_authenticated and current_user.id == upload.user_id %}
+            <form action="{{ url_for('delete_upload', upload_id=upload.id) }}" method="post"
+                  onsubmit="return confirm('Delete this upload?')">
+              {{ comment_form.hidden_tag() }}
+              <button class="action-btn action-danger" type="submit">Delete</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Uploader -->
+    <div class="watch-channel">
+      <a href="{{ url_for('profile', username=upload.uploader.username) }}" class="channel-link">
+        {% if upload.uploader.avatar %}
+          <img src="{{ url_for('uploaded_file', filename='avatars/' + upload.uploader.avatar) }}"
+               alt="{{ upload.uploader.username }}" class="channel-avatar" />
+        {% else %}
+          <div class="channel-avatar-placeholder">{{ upload.uploader.username[0].upper() }}</div>
+        {% endif %}
+        <div>
+          <div class="channel-name">{{ upload.uploader.username }}</div>
+          <div class="channel-sub">Content creator</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Description -->
+    {% if upload.description %}
+    <div class="watch-description">
+      <h3>About this {{ upload.file_type }}</h3>
+      <p>{{ upload.description }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Comments -->
+    <div class="comments-section" id="commentsSection">
+      <h3 class="comments-title">Comments <span class="comment-count" id="commentCount">{{ upload.comment_count }}</span></h3>
+
+      {% if current_user.is_authenticated %}
+        <div class="comment-form-box">
+          <div class="channel-avatar-placeholder small">{{ current_user.username[0].upper() }}</div>
+          <div class="comment-input-wrap">
+            <textarea id="commentInput" placeholder="Add a comment…" rows="2" maxlength="2000"></textarea>
+            <button class="btn btn-primary btn-sm" onclick="postComment({{ upload.id }})">Post</button>
+          </div>
+        </div>
+      {% else %}
+        <div class="login-to-comment">
+          <a href="{{ url_for('login') }}">Sign in</a> to leave a comment
+        </div>
+      {% endif %}
+
+      <div id="commentsList">
+        {% for c in comments %}
+          <div class="comment-item">
+            <div class="channel-avatar-placeholder small">{{ c.author.username[0].upper() }}</div>
+            <div class="comment-body">
+              <div class="comment-header">
+                <a href="{{ url_for('profile', username=c.author.username) }}" class="comment-author">{{ c.author.username }}</a>
+                <span class="comment-time">{{ c.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+              </div>
+              <p class="comment-text">{{ c.body }}</p>
+            </div>
+          </div>
+        {% endfor %}
+        {% if not comments %}
+          <p class="no-comments">No comments yet. Be the first!</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: related -->
+  <aside class="watch-sidebar">
+    <h3 class="sidebar-section-title">More in {{ upload.category }}</h3>
+    {% for item in related %}
+      <a class="related-card" href="{{ url_for('view_upload', upload_id=item.id) }}">
+        <div class="related-thumb thumb-{{ item.file_type }}">
+          {% if item.file_type == 'image' %}
+            <img src="{{ url_for('uploaded_file', filename='images/' + item.filename) }}" alt="{{ item.title }}" />
+          {% elif item.file_type == 'video' %}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          {% else %}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          {% endif %}
+        </div>
+        <div class="related-info">
+          <div class="related-title">{{ item.title }}</div>
+          <div class="related-meta">{{ item.uploader.username }} · {{ item.view_count }} views</div>
+        </div>
+      </a>
+    {% else %}
+      <p class="no-related">Nothing related yet.</p>
+    {% endfor %}
+  </aside>
+</div>
+
+<meta name="csrf-token" content="{{ csrf_token() }}" />
+{% endblock %}
+
+{% block scripts %}
+<script>
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+async function toggleLike(uploadId) {
+  {% if not current_user.is_authenticated %}
+    window.location = '{{ url_for("login") }}';
+    return;
+  {% endif %}
+  const btn = document.getElementById('likeBtn');
+  const resp = await fetch(`/like/${uploadId}`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json'}
+  });
+  if (resp.ok) {
+    const data = await resp.json();
+    document.getElementById('likeCount').textContent = data.count;
+    btn.classList.toggle('liked', data.liked);
+    btn.querySelector('svg path').setAttribute('fill', data.liked ? 'currentColor' : 'none');
+  }
+}
+
+async function postComment(uploadId) {
+  const input = document.getElementById('commentInput');
+  const body = input.value.trim();
+  if (!body) return;
+
+  const resp = await fetch(`/comment/${uploadId}`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json'},
+    body: JSON.stringify({body})
+  });
+  if (resp.ok) {
+    const c = await resp.json();
+    const list = document.getElementById('commentsList');
+    const noComments = list.querySelector('.no-comments');
+    if (noComments) noComments.remove();
+
+    const html = `
+      <div class="comment-item">
+        <div class="channel-avatar-placeholder small">${c.username[0].toUpperCase()}</div>
+        <div class="comment-body">
+          <div class="comment-header">
+            <a href="/user/${c.username}" class="comment-author">${c.username}</a>
+            <span class="comment-time">${c.created_at}</span>
+          </div>
+          <p class="comment-text">${escapeHtml(c.body)}</p>
+        </div>
+      </div>`;
+    list.insertAdjacentHTML('afterbegin', html);
+    input.value = '';
+    const cnt = document.getElementById('commentCount');
+    cnt.textContent = parseInt(cnt.textContent) + 1;
+  }
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+{% endblock %}
