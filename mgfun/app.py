@@ -46,6 +46,9 @@ def create_app(env=None):
         if ftype == 'pdf':
             return ext in app.config['ALLOWED_PDF_EXTENSIONS']
         return False
+        # audio
+        if ftype == 'audio':
+            return ext in app.config.get('ALLOWED_AUDIO_EXTENSIONS', set())
 
     def detect_file_type(filename):
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
@@ -354,4 +357,4 @@ with app.app_context():
 
 if __name__ == '__main__':
     
-    app.run(debug=True, host='0.0.0.0', port="port")
+    app.run(debug=True, host='0.0.0.0', port='port')
