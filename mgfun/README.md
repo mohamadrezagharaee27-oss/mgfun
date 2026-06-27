@@ -1,176 +1,190 @@
-# MG FUN — Video Sharing Platform
+# MgFun – Flask + PostgreSQL + Cloudinary on Render
 
-A full-featured media sharing platform (videos, images, PDFs) built with Python Flask.
+A Flask application with persistent PostgreSQL storage and Cloudinary-backed file uploads (images, PDFs, audio). Fully compatible with Render free tier.
 
 ---
 
-## Features
+## Table of Contents
+1. [Required Environment Variables](#required-environment-variables)
+2. [Create a PostgreSQL Database on Render](#create-a-postgresql-database-on-render)
+3. [Create a Cloudinary Account](#create-a-cloudinary-account)
+4. [Deploy on Render](#deploy-on-render)
+5. [Migrate from SQLite](#migrate-from-sqlite)
+6. [Local Development](#local-development)
+7. [Feature Overview](#feature-overview)
 
-- User registration & login with persistent "Remember Me" sessions
-- Upload videos (mp4, avi, mov, mkv, webm, flv), images (jpg, png, gif, webp), and PDFs
-- View counter, like system (one per user, AJAX), comment system (AJAX)
-- Search by title & description with category filtering
-- User profiles and settings
-- Dark, responsive UI (desktop + mobile)
-- CSRF protection on all forms
-- Ready for Render.com deployment with PostgreSQL
+---
+
+## Required Environment Variables
+
+| Variable | Where to get it | Required |
+|---|---|---|
+| `SECRET_KEY` | Any random string (generate with `python -c "import secrets; print(secrets.token_hex(32))"`) | ✅ |
+| `DATABASE_URL` | Render PostgreSQL → Connection String | ✅ |
+| `CLOUDINARY_CLOUD_NAME` | Cloudinary Dashboard → Cloud Name | ✅ |
+| `CLOUDINARY_API_KEY` | Cloudinary Dashboard → API Key | ✅ |
+| `CLOUDINARY_API_SECRET` | Cloudinary Dashboard → API Secret | ✅ |
+
+> **Note:** Render sets `DATABASE_URL` automatically when you link a database to a web service. You only need to set the Cloudinary variables manually.
+
+---
+
+## Create a PostgreSQL Database on Render
+
+1. Go to [https://dashboard.render.com](https://dashboard.render.com) and sign in.
+2. Click **New +** → **PostgreSQL**.
+3. Fill in:
+   - **Name**: `mgfun-db` (or any name)
+   - **Database**: `mgfun`
+   - **User**: `mgfun`
+   - **Region**: Choose the same region as your web service
+   - **Plan**: Free
+4. Click **Create Database**.
+5. After creation, copy the **Internal Database URL** (use this when the web service is in the same region).
+
+---
+
+## Create a Cloudinary Account
+
+1. Go to [https://cloudinary.com](https://cloudinary.com) and sign up for a **free** account.
+2. After login, go to your **Dashboard**.
+3. Note down:
+   - **Cloud Name**
+   - **API Key**
+   - **API Secret**
+4. (Optional) Go to **Settings → Upload** and create an **unsigned upload preset** if you want client-side uploads in the future.
+
+The free tier provides **25 GB storage + 25 GB bandwidth/month** — plenty for most projects.
+
+---
+
+## Deploy on Render
+
+### Option A – One-click with render.yaml (recommended)
+
+1. Push your project to GitHub/GitLab.
+2. Go to [https://dashboard.render.com](https://dashboard.render.com).
+3. Click **New +** → **Blueprint**.
+4. Connect your repository.
+5. Render detects `render.yaml` and creates both the web service and the PostgreSQL database automatically.
+6. Add the Cloudinary environment variables in the web service settings:
+   - `CLOUDINARY_CLOUD_NAME`
+   - `CLOUDINARY_API_KEY`
+   - `CLOUDINARY_API_SECRET`
+7. Click **Apply** / **Deploy**.
+
+### Option B – Manual setup
+
+1. Push your project to GitHub/GitLab.
+2. Go to **Render Dashboard → New + → Web Service**.
+3. Connect your repository.
+4. Set:
+   - **Runtime**: Python 3
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120`
+5. Add environment variables:
+   - `SECRET_KEY` = (generate a random string)
+   - `DATABASE_URL` = (from your Render PostgreSQL → Internal Database URL)
+   - `CLOUDINARY_CLOUD_NAME` = ...
+   - `CLOUDINARY_API_KEY` = ...
+   - `CLOUDINARY_API_SECRET` = ...
+6. Click **Create Web Service**.
+
+### First deploy
+
+On first boot, `app.py` calls `db.create_all()` inside `with app.app_context()`, which creates all tables automatically. No manual migration step needed.
+
+---
+
+## Migrate from SQLite
+
+If you have existing data in an SQLite file:
+
+```bash
+# Set environment variables
+export DATABASE_URL="postgresql+psycopg://user:pass@host/dbname"
+export SQLITE_PATH="./instance/site.db"   # path to your old SQLite file
+
+# Run the migration script
+python migrate_sqlite_to_postgres.py
+```
+
+The script:
+- Reads all rows from SQLite (`users` and `posts` tables)
+- Creates PostgreSQL tables if they don't exist
+- Inserts all rows, skipping any that already exist (safe to re-run)
+
+**Note:** Local file paths stored in `image`, `pdf`, or `audio` columns from the old SQLite database will be carried over as-is. Those old local URLs will be broken on Render (since Render doesn't persist the filesystem). You'll need to re-upload those files to get Cloudinary URLs. New uploads will work correctly.
 
 ---
 
 ## Local Development
 
-### 1. Clone & create virtual environment
-
 ```bash
+# 1. Clone the repo
 git clone <your-repo-url>
 cd mgfun
+
+# 2. Create a virtual environment
 python -m venv venv
 source venv/bin/activate   # Windows: venv\Scripts\activate
-```
 
-### 2. Install dependencies
-
-```bash
+# 3. Install dependencies
 pip install -r requirements.txt
+
+# 4. Set environment variables (or use a .env file with python-dotenv)
+export SECRET_KEY="dev-secret-key"
+export DATABASE_URL="sqlite:///local_dev.db"   # SQLite for local dev
+export CLOUDINARY_CLOUD_NAME="your-cloud-name"
+export CLOUDINARY_API_KEY="your-api-key"
+export CLOUDINARY_API_SECRET="your-api-secret"
+
+# 5. Run
+python app.py
 ```
 
-### 3. Configure environment
+Visit [http://localhost:5000](http://localhost:5000).
 
-```bash
-cp .env.example .env
-# Edit .env — set a strong SECRET_KEY
-```
-
-### 4. Initialize the database
-
-```bash
-flask init-db
-# or
-python -c "from app import app; from models import db; \
-           app.app_context().__enter__(); db.create_all()"
-```
-
-### 5. Run the development server
-
-```bash
-flask run
-# Visit http://127.0.0.1:5000
-```
+> **Tip:** For local dev you can use SQLite (`DATABASE_URL=sqlite:///local_dev.db`). Just switch to the PostgreSQL URL for production.
 
 ---
 
-## Project Structure
+## Feature Overview
+
+| Feature | Details |
+|---|---|
+| Authentication | Register, login, logout with hashed passwords (Werkzeug) |
+| Posts | Create, view, edit, delete posts |
+| Image uploads | PNG, JPG, GIF, WEBP → stored on Cloudinary |
+| PDF uploads | PDF → stored on Cloudinary, linked for download |
+| Audio uploads | MP3, WAV, OGG, AAC, FLAC → stored on Cloudinary, HTML5 `<audio>` player |
+| Persistent storage | All files survive Render restarts/redeploys (Cloudinary) |
+| Database | PostgreSQL via psycopg (v3) + SQLAlchemy 2.x |
+| Python version | 3.12 |
+| Deployment | Render-ready (`render.yaml`, `Procfile`, `runtime.txt`) |
+
+---
+
+## File Structure
 
 ```
 mgfun/
-├── app.py              # Flask application factory & all routes
-├── models.py           # SQLAlchemy models (User, Upload, Like, Comment, View)
-├── forms.py            # WTForms form classes
-├── config.py           # Dev / prod configuration
+├── app.py                        # Main Flask application
 ├── requirements.txt
-├── render.yaml         # Render Blueprint for one-click deploy
-├── Procfile            # gunicorn start command
-├── runtime.txt         # Python version pin
-├── .env.example        # Environment variable template
+├── Procfile
+├── runtime.txt
+├── render.yaml
+├── migrate_sqlite_to_postgres.py # One-time SQLite → Postgres migration
+├── README.md
 ├── static/
-│   ├── css/main.css
-│   ├── js/main.js
-│   └── uploads/
-│       ├── videos/
-│       ├── images/
-│       ├── pdfs/
-│       └── avatars/
+│   └── css/
+│       └── style.css
 └── templates/
     ├── base.html
     ├── index.html
+    ├── post.html
+    ├── new_post.html
+    ├── edit_post.html
     ├── login.html
-    ├── register.html
-    ├── upload.html
-    ├── watch.html
-    ├── profile.html
-    ├── settings.html
-    ├── search.html
-    ├── category.html
-    └── errors/
-        ├── 404.html
-        └── 403.html
+    └── register.html
 ```
-
----
-
-## Deploy to Render.com
-
-### Option A — Blueprint (render.yaml) — recommended
-
-1. Push your code to a GitHub/GitLab repo.
-2. In Render Dashboard → **New** → **Blueprint**.
-3. Connect your repo; Render reads `render.yaml` and:
-   - Creates a **Web Service** running gunicorn
-   - Creates a free **PostgreSQL database**
-   - Wires `DATABASE_URL` automatically
-4. After first deploy, open the **Shell** tab and run:
-   ```bash
-   flask init-db
-   ```
-
-### Option B — Manual
-
-1. **New Web Service** → connect your repo.
-2. Build command: `pip install -r requirements.txt`
-3. Start command: `gunicorn app:app --workers 2 --bind 0.0.0.0:$PORT`
-4. Add environment variables:
-   | Key | Value |
-   |-----|-------|
-   | `FLASK_ENV` | `production` |
-   | `SECRET_KEY` | (generate a strong random string) |
-   | `DATABASE_URL` | (from your Render PostgreSQL instance) |
-5. Create a free PostgreSQL database in Render, copy its **Internal Connection String** into `DATABASE_URL`.
-6. After deploy, open Shell and run `flask init-db`.
-
-### ⚠️ File storage note
-
-Render's free tier has an **ephemeral filesystem** — uploaded files are lost on each deploy/restart. For production persistence, integrate an object storage service (e.g. AWS S3, Cloudflare R2, or Backblaze B2) and update the `save_file()` helper in `app.py`.
-
----
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `FLASK_ENV` | `development` or `production` | `development` |
-| `SECRET_KEY` | Flask session secret | hardcoded dev key |
-| `DATABASE_URL` | SQLAlchemy DB URI | SQLite (`mgfun.db`) |
-
----
-
-## Database Models
-
-| Table | Key columns |
-|-------|-------------|
-| `users` | id, username (unique), email (unique), password_hash, avatar, bio |
-| `uploads` | id, title, description, category, file_type, filename, user_id, view_count |
-| `likes` | id, user_id, upload_id — unique constraint prevents duplicates |
-| `comments` | id, body, user_id, upload_id, created_at |
-| `views` | id, upload_id, user_id (nullable), ip_address |
-
----
-
-## Security
-
-- Passwords hashed with Werkzeug `pbkdf2:sha256`
-- CSRF tokens on every form via Flask-WTF
-- File type validated by extension (and MIME type check recommended for production)
-- Max upload: 500 MB
-- Duplicate likes prevented by DB unique constraint + query check
-- `SESSION_COOKIE_SECURE=True` in production (requires HTTPS)
-- `SESSION_COOKIE_HTTPONLY=True` always
-
----
-
-## Customisation Tips
-
-- **Add S3 upload**: replace `save_file()` with `boto3.upload_fileobj()`
-- **Add email verification**: integrate Flask-Mail
-- **Add video thumbnails**: use `ffmpeg` to extract a frame on upload
-- **Add pagination to homepage**: use `.paginate()` on all queries
-- **Rate limiting**: add `Flask-Limiter` to the comment/like endpoints

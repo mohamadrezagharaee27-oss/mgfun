@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}New Post – MgFun{% endblock %}
+{% block content %}
+<div class="form-page">
+  <h1>New Post</h1>
+  <form method="POST" enctype="multipart/form-data" class="post-form">
+    <div class="form-group">
+      <label for="title">Title *</label>
+      <input type="text" id="title" name="title" required class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label for="body">Content *</label>
+      <textarea id="body" name="body" rows="8" required class="form-control"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label for="image">Image (png, jpg, gif, webp)</label>
+      <input type="file" id="image" name="image" accept=".png,.jpg,.jpeg,.gif,.webp" class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label for="pdf">PDF Attachment</label>
+      <input type="file" id="pdf" name="pdf" accept=".pdf" class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label for="audio">Audio File (mp3, wav, ogg, aac, flac)</label>
+      <input type="file" id="audio" name="audio" accept=".mp3,.wav,.ogg,.aac,.flac" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Publish Post</button>
+    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

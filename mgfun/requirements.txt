@@ -1,10 +1,8 @@
-Flask==3.0.3
-Flask-SQLAlchemy==3.1.1
-Flask-Login==0.6.3
-Flask-WTF==1.2.1
-WTForms==3.1.2
-Werkzeug==3.0.3
+flask==3.0.3
+flask-sqlalchemy==3.1.1
+flask-login==0.6.3
+sqlalchemy==2.0.30
+psycopg[binary]==3.1.19
+cloudinary==1.40.0
+werkzeug==3.0.3
 gunicorn==22.0.0
-psycopg[binary] + SQLAlchemy 2.x
-email-validator==2.1.1
-python-dotenv==1.0.1

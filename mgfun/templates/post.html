@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} – MgFun{% endblock %}
+{% block content %}
+<article class="post-full">
+  <h1>{{ post.title }}</h1>
+  <p class="post-meta">By {{ post.author.username }} · {{ post.created_at.strftime('%B %d, %Y') }}</p>
+
+  {% if post.image_url %}
+    <img class="post-image" src="{{ post.image_url }}" alt="{{ post.title }}" />
+  {% endif %}
+
+  <div class="post-body">{{ post.body }}</div>
+
+  {% if post.audio_url %}
+    <div class="media-section">
+      <h3>🎵 Audio</h3>
+      <audio controls class="audio-player">
+        <source src="{{ post.audio_url }}" type="{{ post.audio_type or 'audio/mpeg' }}" />
+        Your browser does not support the audio element.
+      </audio>
+    </div>
+  {% endif %}
+
+  {% if post.pdf_url %}
+    <div class="media-section">
+      <h3>📄 PDF Attachment</h3>
+      <a class="btn btn-outline" href="{{ post.pdf_url }}" target="_blank" rel="noopener">
+        Open / Download PDF
+      </a>
+    </div>
+  {% endif %}
+
+  {% if current_user.is_authenticated and current_user.id == post.user_id %}
+    <div class="post-actions">
+      <a class="btn btn-secondary" href="{{ url_for('edit_post', post_id=post.id) }}">Edit</a>
+      <form method="POST" action="{{ url_for('delete_post', post_id=post.id) }}"
+            onsubmit="return confirm('Delete this post?');" style="display:inline;">
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </form>
+    </div>
+  {% endif %}
+
+  <a href="{{ url_for('index') }}" class="back-link">← Back to posts</a>
+</article>
+{% endblock %}

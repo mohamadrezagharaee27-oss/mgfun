@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Edit Post – MgFun{% endblock %}
+{% block content %}
+<div class="form-page">
+  <h1>Edit Post</h1>
+  <form method="POST" enctype="multipart/form-data" class="post-form">
+    <div class="form-group">
+      <label for="title">Title</label>
+      <input type="text" id="title" name="title" value="{{ post.title }}" class="form-control" />
+    </div>
+
+    <div class="form-group">
+      <label for="body">Content</label>
+      <textarea id="body" name="body" rows="8" class="form-control">{{ post.body }}</textarea>
+    </div>
+
+    {% if post.image_url %}
+      <div class="form-group">
+        <p>Current image:</p>
+        <img src="{{ post.image_url }}" alt="Current" class="current-media-thumb" />
+      </div>
+    {% endif %}
+    <div class="form-group">
+      <label for="image">Replace Image</label>
+      <input type="file" id="image" name="image" accept=".png,.jpg,.jpeg,.gif,.webp" class="form-control" />
+    </div>
+
+    {% if post.pdf_url %}
+      <div class="form-group">
+        <p>Current PDF: <a href="{{ post.pdf_url }}" target="_blank">View</a></p>
+      </div>
+    {% endif %}
+    <div class="form-group">
+      <label for="pdf">Replace PDF</label>
+      <input type="file" id="pdf" name="pdf" accept=".pdf" class="form-control" />
+    </div>
+
+    {% if post.audio_url %}
+      <div class="form-group">
+        <p>Current audio:</p>
+        <audio controls>
+          <source src="{{ post.audio_url }}" type="{{ post.audio_type or 'audio/mpeg' }}" />
+        </audio>
+      </div>
+    {% endif %}
+    <div class="form-group">
+      <label for="audio">Replace Audio (mp3, wav, ogg, aac, flac)</label>
+      <input type="file" id="audio" name="audio" accept=".mp3,.wav,.ogg,.aac,.flac" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save Changes</button>
+    <a href="{{ url_for('view_post', post_id=post.id) }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}
