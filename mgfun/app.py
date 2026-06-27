@@ -1,5 +1,6 @@
 import os
 import uuid
+import psycopg
 from datetime import datetime
 from flask import (Flask, render_template, redirect, url_for, flash,
                    request, jsonify, abort, send_from_directory)
