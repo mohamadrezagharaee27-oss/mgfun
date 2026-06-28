@@ -18,9 +18,9 @@ app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "change-me-in-production
 database_url = os.environ.get("DATABASE_URL", "sqlite:///local_dev.db")
 # Render sometimes returns postgres:// — SQLAlchemy 2.x requires postgresql://
 if database_url.startswith("postgres://"):
-    database_url = database_url.replace("postgres://", "postgresql+psycopg://", 1)
+    database_url = database_url.replace("postgres://", "postgresql://", 1)
 elif database_url.startswith("postgresql://") and "psycopg" not in database_url:
-    database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    database_url = database_url.replace("postgresql://", "postgresql://", 1)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = database_url
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
