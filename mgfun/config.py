@@ -9,7 +9,6 @@ class Config:
     MAX_CONTENT_LENGTH = 500 * 1024 * 1024  # 500MB
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'uploads')
     ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'webm', 'flv'}
-    ALLOWED_AUDIO_EXTENSIONS = {'mp3', 'wav', 'ogg'}
     ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
     ALLOWED_PDF_EXTENSIONS = {'pdf'}
     REMEMBER_COOKIE_DURATION = timedelta(days=30)
